@@ -1,13 +1,18 @@
-use crate::view::view;
+use crate::{view::view, ITALIC_FONT, REGULAR_FONT};
 use nannou::{
     prelude::*,
-    text::{Justify, Layout},
+    text::{
+        Font,
+        Justify::{self, Center, Left},
+        Layout,
+    },
 };
-use std::f32::consts::{PI, TAU};
+use std::{f32::consts::TAU, marker::PhantomData as PD};
+use FontType::{Italic, Regular};
 
-pub const DEFAULT_RATE: f32 = 0.007;
+const DEFAULT_RATE: f32 = 0.007;
 const STROKE_WEIGHT: f32 = 3.0;
-const RADIUS: f32 = 250.0;
+const UNIT_RADIUS: f32 = 200.0;
 
 const SIN_LABEL: &str = "sin θ";
 const COS_LABEL: &str = "cos θ";
@@ -16,23 +21,50 @@ const COT_LABEL: &str = "cot θ";
 const SEC_LABEL: &str = "sec θ";
 const CSC_LABEL: &str = "csc θ";
 
-fn label_layout() -> Layout {
-    Layout { justify: Justify::Center, font_size: 13, ..Default::default() }
+const SIN_COLOR: Rgb = Rgb { red: 1.0, green: 0.0, blue: 0.0, standard: PD };
+const COS_COLOR: Rgb = Rgb { red: 0.0, green: 1.0, blue: 0.0, standard: PD };
+const TAN_COLOR: Rgb = Rgb { red: 1.0, green: 1.0, blue: 0.0, standard: PD };
+const COT_COLOR: Rgb = Rgb { red: 1.0, green: 0.5, blue: 0.0, standard: PD };
+const SEC_COLOR: Rgb = Rgb { red: 1.0, green: 0.0, blue: 1.0, standard: PD };
+const CSC_COLOR: Rgb = Rgb { red: 0.0, green: 0.5, blue: 1.0, standard: PD };
+
+enum FontType {
+    Regular,
+    Italic,
+}
+
+fn label_layout(
+    font_size: u32,
+    font_type: FontType,
+    justify: Justify,
+) -> Layout {
+    Layout {
+        justify,
+        font_size,
+        font: Some(
+            Font::from_bytes(match font_type {
+                Regular => REGULAR_FONT,
+                Italic => ITALIC_FONT,
+            })
+            .expect("failed to load font"),
+        ),
+        ..Default::default()
+    }
 }
 
 #[derive(Clone, Copy, Default)]
 struct TrigValues {
-    /// Sine
+    /// Sine function
     pub sin: f32,
-    /// Cosine
+    /// Cosine function
     pub cos: f32,
-    /// Tangent
+    /// Tangent function
     pub tan: f32,
-    /// Cotangent
+    /// Cotangent function
     pub cot: f32,
-    /// Secant
+    /// Secant function
     pub sec: f32,
-    /// Cosecant
+    /// Cosecant function
     pub csc: f32,
 }
 
@@ -53,18 +85,17 @@ impl std::ops::Mul<f32> for TrigValues {
 
 pub struct Model {
     _window: window::Id,
+    win_rect: Rect,
+
     theta: f32,
     rate: f32,
 
     trig_values: TrigValues,
     trig_values_scaled: TrigValues,
 
-    win_rect: Rect,
     is_running: bool,
     draw_labels: bool,
     draw_values: bool,
-
-    center_point: Vec2,
 }
 
 impl Model {
@@ -86,8 +117,7 @@ impl Model {
             win_rect: app.main_window().rect(),
             is_running: true,
             draw_labels: true,
-            draw_values: false,
-            center_point: Vec2::new(0.0, 0.0),
+            draw_values: true,
         }
     }
 
@@ -113,7 +143,7 @@ impl Model {
         *sec = cos.recip();
         *csc = sin.recip();
 
-        self.trig_values_scaled = self.trig_values * RADIUS;
+        self.trig_values_scaled = self.trig_values * UNIT_RADIUS;
     }
 
     pub fn increment_rate(&mut self) {
@@ -143,7 +173,7 @@ impl Model {
         draw.line()
             .stroke_weight(STROKE_WEIGHT - 0.3)
             .start(ml)
-            .end(mr)
+            .end(vec2(1000.0, 0.0))
             .color(GREY);
 
         let top = self.win_rect.mid_top();
@@ -161,16 +191,16 @@ impl Model {
     pub fn draw_unit_circle(&self, draw: &Draw) {
         draw.ellipse()
             .no_fill()
-            .radius(RADIUS)
+            .radius(UNIT_RADIUS)
             .stroke_weight(STROKE_WEIGHT - 0.3)
             .stroke(WHITE)
-            .xy(self.center_point);
+            .xy(Vec2::ZERO);
     }
 
     pub fn draw_node(&self, draw: &Draw) {
         let pt = Vec2::new(
-            self.trig_values.cos * RADIUS,
-            self.trig_values.sin * RADIUS,
+            self.trig_values.cos * UNIT_RADIUS,
+            self.trig_values.sin * UNIT_RADIUS,
         );
 
         draw.ellipse().radius(8.0).color(WHITE).xy(pt);
@@ -185,18 +215,55 @@ impl Model {
         self.draw_csc_line(draw);
     }
 
+    pub fn draw_values(&self, draw: &Draw) {
+        if !self.draw_values {
+            return;
+        }
+
+        // sin
+        draw.text(&format!("{} = {:.3}", SIN_LABEL, self.trig_values.sin))
+            .xy(vec2(430.0, 150.0))
+            .layout(&label_layout(18, Italic, Left))
+            .color(SIN_COLOR);
+        // cos
+        draw.text(&format!("{} = {:.3}", COS_LABEL, self.trig_values.cos))
+            .xy(vec2(430.0, 100.0))
+            .layout(&label_layout(18, Italic, Left))
+            .color(COS_COLOR);
+        // tan
+        draw.text(&format!("{} = {:.3}", TAN_LABEL, self.trig_values.tan))
+            .xy(vec2(430.0, 50.0))
+            .layout(&label_layout(18, Italic, Left))
+            .color(TAN_COLOR);
+        // cot
+        draw.text(&format!("{} = {:.3}", COT_LABEL, self.trig_values.cot))
+            .xy(vec2(430.0, -50.0))
+            .layout(&label_layout(18, Italic, Left))
+            .color(COT_COLOR);
+        // sec
+        draw.text(&format!("{} = {:.3}", SEC_LABEL, self.trig_values.sec))
+            .xy(vec2(430.0, -100.0))
+            .layout(&label_layout(18, Italic, Left))
+            .color(SEC_COLOR);
+        // csc
+        draw.text(&format!("{} = {:.3}", CSC_LABEL, self.trig_values.csc))
+            .xy(vec2(430.0, -150.0))
+            .layout(&label_layout(18, Italic, Left))
+            .color(CSC_COLOR);
+    }
+
     fn draw_cos_line(&self, draw: &Draw) {
         draw.line()
             .start(Vec2::ZERO)
             .end(vec2(self.trig_values_scaled.cos, 0.0))
-            .color(GREEN)
+            .color(COS_COLOR)
             .stroke_weight(STROKE_WEIGHT);
 
         if self.draw_labels {
             draw.text(COS_LABEL)
                 .xy(vec2(self.trig_values_scaled.cos * 0.5, 12.0))
-                .layout(&label_layout())
-                .color(GREEN);
+                .layout(&label_layout(13, Regular, Center))
+                .color(COS_COLOR);
         }
     }
 
@@ -204,7 +271,7 @@ impl Model {
         draw.line()
             .start(vec2(self.trig_values_scaled.cos, 0.0))
             .end(vec2(self.trig_values_scaled.cos, self.trig_values_scaled.sin))
-            .color(RED)
+            .color(SIN_COLOR)
             .stroke_weight(STROKE_WEIGHT);
 
         if self.draw_labels {
@@ -213,23 +280,23 @@ impl Model {
                     self.trig_values_scaled.cos + 20.0,
                     self.trig_values_scaled.sin * 0.5,
                 ))
-                .layout(&label_layout())
-                .color(RED);
+                .layout(&label_layout(13, Regular, Center))
+                .color(SIN_COLOR);
         }
     }
 
     fn draw_tan_line(&self, draw: &Draw) {
         draw.line()
-            .start(vec2(RADIUS, 0.0))
-            .end(vec2(RADIUS, self.trig_values_scaled.tan))
-            .color(YELLOW)
+            .start(vec2(UNIT_RADIUS, 0.0))
+            .end(vec2(UNIT_RADIUS, self.trig_values_scaled.tan))
+            .color(TAN_COLOR)
             .stroke_weight(STROKE_WEIGHT);
 
         if self.draw_labels {
             draw.text(TAN_LABEL)
-                .xy(vec2(RADIUS + 20.0, self.trig_values_scaled.tan * 0.5))
-                .layout(&label_layout())
-                .color(YELLOW);
+                .xy(vec2(UNIT_RADIUS + 20.0, self.trig_values_scaled.tan * 0.5))
+                .layout(&label_layout(13, Regular, Center))
+                .color(TAN_COLOR);
         }
     }
 
@@ -239,7 +306,7 @@ impl Model {
                 self.trig_values_scaled.cos, self.trig_values_scaled.sin,
             ))
             .end(vec2(0.0, self.trig_values_scaled.csc))
-            .color(ORANGE)
+            .color(COT_COLOR)
             .stroke_weight(STROKE_WEIGHT);
 
         if self.draw_labels {
@@ -250,26 +317,26 @@ impl Model {
                         * 0.5
                         + 12.0,
                 ))
-                .layout(&label_layout())
-                .color(ORANGE);
+                .layout(&label_layout(13, Regular, Center))
+                .color(COT_COLOR);
         }
     }
 
     fn draw_sec_line(&self, draw: &Draw) {
         draw.line()
             .start(Vec2::ZERO)
-            .end(vec2(RADIUS, self.trig_values_scaled.tan))
-            .color(MAGENTA)
+            .end(vec2(UNIT_RADIUS, self.trig_values_scaled.tan))
+            .color(SEC_COLOR)
             .stroke_weight(STROKE_WEIGHT);
 
         if self.draw_labels {
             draw.text(SEC_LABEL)
                 .xy(vec2(
-                    RADIUS * 0.5 + 12.0,
+                    UNIT_RADIUS * 0.5 + 12.0,
                     self.trig_values_scaled.tan * 0.5 + 12.0,
                 ))
-                .layout(&label_layout())
-                .color(MAGENTA);
+                .layout(&label_layout(13, Regular, Center))
+                .color(SEC_COLOR);
         }
     }
 
@@ -277,14 +344,14 @@ impl Model {
         draw.line()
             .start(Vec2::ZERO)
             .end(vec2(0.0, self.trig_values_scaled.csc))
-            .color(AQUA)
+            .color(CSC_COLOR)
             .stroke_weight(STROKE_WEIGHT);
 
         if self.draw_labels {
             draw.text(CSC_LABEL)
                 .xy(vec2(-20.0, self.trig_values_scaled.csc * 0.5))
-                .layout(&label_layout())
-                .color(AQUA);
+                .layout(&label_layout(13, Regular, Center))
+                .color(CSC_COLOR);
         }
     }
 
