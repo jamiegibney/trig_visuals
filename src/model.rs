@@ -1,5 +1,5 @@
 #![allow(clippy::suboptimal_flops)]
-use crate::{ITALIC_FONT, REGULAR_FONT};
+use crate::{consts::*, labels::*, ITALIC_FONT, REGULAR_FONT};
 use nannou::{
     prelude::*,
     text::{
@@ -8,42 +8,20 @@ use nannou::{
         Layout,
     },
 };
-use std::{
-    f32::{
-        consts::{PI, TAU},
-        MAX as INF,
-    },
-    marker::PhantomData as PD,
+use std::f32::{
+    consts::{PI, TAU},
+    MAX as INF,
 };
-use FontType::{Italic, Regular};
-
-const DEFAULT_RATE: f32 = 0.25;
-const RATE_INCREMENT: f32 = 0.08;
-const STROKE_WEIGHT: f32 = 3.0;
-const UNIT_RADIUS: f32 = 200.0;
-
-const SIN_LABEL: &str = "sin θ";
-const COS_LABEL: &str = "cos θ";
-const TAN_LABEL: &str = "tan θ";
-const COT_LABEL: &str = "cot θ";
-const SEC_LABEL: &str = "sec θ";
-const CSC_LABEL: &str = "csc θ";
-
-const SIN_COLOR: Rgb = Rgb { red: 1.0, green: 0.0, blue: 0.0, standard: PD };
-const COS_COLOR: Rgb = Rgb { red: 0.0, green: 1.0, blue: 0.0, standard: PD };
-const TAN_COLOR: Rgb = Rgb { red: 1.0, green: 1.0, blue: 0.0, standard: PD };
-const COT_COLOR: Rgb = Rgb { red: 1.0, green: 0.5, blue: 0.0, standard: PD };
-const SEC_COLOR: Rgb = Rgb { red: 1.0, green: 0.0, blue: 1.0, standard: PD };
-const CSC_COLOR: Rgb = Rgb { red: 0.0, green: 1.0, blue: 1.0, standard: PD };
+use FontStyle::{Italic, Regular};
 
 #[derive(Clone, Copy)]
-enum FontType {
+enum FontStyle {
     Regular,
     Italic,
 }
 
-impl FontType {
-    pub const fn into_font(self) -> &'static [u8] {
+impl FontStyle {
+    pub const fn font_data(self) -> &'static [u8] {
         match self {
             Regular => REGULAR_FONT,
             Italic => ITALIC_FONT,
@@ -53,13 +31,13 @@ impl FontType {
 
 fn font_layout(
     font_size: u32,
-    font_type: FontType,
+    font_style: FontStyle,
     justify: Justify,
 ) -> Layout {
     Layout {
         justify,
         font_size,
-        font: Font::from_bytes(font_type.into_font()).ok(),
+        font: Font::from_bytes(font_style.font_data()).ok(),
         line_spacing: 3.0,
         ..Default::default()
     }
@@ -83,14 +61,10 @@ struct TrigValues {
 
 impl TrigValues {
     pub fn clamp_inf(&mut self) {
-        let clamp_finite = |value: &mut f32| {
-            *value = value.clamp(-INF, INF);
-        };
-
-        clamp_finite(&mut self.tan);
-        clamp_finite(&mut self.cot);
-        clamp_finite(&mut self.sec);
-        clamp_finite(&mut self.csc);
+        self.tan = self.tan.clamp(-INF, INF);
+        self.cot = self.cot.clamp(-INF, INF);
+        self.sec = self.sec.clamp(-INF, INF);
+        self.csc = self.csc.clamp(-INF, INF);
     }
 }
 
@@ -124,6 +98,8 @@ pub struct Model {
     draw_labels: bool,
     draw_values: bool,
     draw_theta: bool,
+
+    label_fading: Labels,
 }
 
 impl Model {
@@ -147,6 +123,8 @@ impl Model {
             draw_labels: true,
             draw_values: true,
             draw_theta: true,
+
+            label_fading: Labels::new(),
         }
     }
 
@@ -155,6 +133,54 @@ impl Model {
     pub fn update(&mut self, delta_time: f32) {
         self.update_theta(delta_time);
         self.compute_trig_values();
+        self.update_label_positions();
+        self.label_fading.update(delta_time);
+    }
+
+    fn update_label_positions(&mut self) {
+        // sin
+        self.label_fading.sin_pos = vec2(
+            self.trig_values_scaled.cos + 22.0,
+            self.trig_values_scaled.sin * 0.5,
+        );
+
+        // cos
+        self.label_fading.cos_pos = vec2(self.trig_values_scaled.cos * 0.5, 15.0);
+
+        // tan
+        self.label_fading.tan_pos =
+            vec2(UNIT_RADIUS + 23.0, self.trig_values_scaled.tan * 0.5);
+
+        // cot
+        let cot_x_dir = if self.theta >= PI { -1.0 } else { 1.0 };
+        self.label_fading.cot_pos = vec2(
+            self.trig_values_scaled.cos * 0.5
+                + (cot_x_dir * self.trig_values.cos * 20.0),
+            (self.trig_values_scaled.sin + self.trig_values_scaled.csc) * 0.5
+                + 12.0
+                + (self.trig_values.sin.abs() * 8.0),
+        );
+
+        // sec
+        self.label_fading.sec_pos = vec2(
+            UNIT_RADIUS * 0.5 - (self.trig_values.tan * 7.0),
+            self.trig_values_scaled.tan * 0.5 + 18.0,
+        );
+
+        // csc
+        self.label_fading.csc_pos = vec2(-25.0, self.trig_values_scaled.csc * 0.5);
+
+        // theta
+        let (th_y, th_x) = (self.theta * 0.5).sin_cos();
+        self.label_fading.theta_pos =
+            vec2(th_x * UNIT_RADIUS * 0.93, th_y * UNIT_RADIUS * 0.93);
+
+        // unit
+        let (un_y, un_x) = (self.theta - PI * 0.5).sin_cos();
+        self.label_fading.unit_pos = vec2(
+            self.trig_values_scaled.cos * 0.5 + 15.0 * un_x,
+            self.trig_values_scaled.sin * 0.5 + 15.0 * un_y,
+        );
     }
 
     fn update_theta(&mut self, delta_time: f32) {
@@ -370,11 +396,12 @@ impl Model {
         let num_points = (THETA_POINTS as f32 * progress).ceil() as usize;
 
         if self.draw_labels {
-            let (y, x) = (self.theta * 0.5).sin_cos();
             draw.text("θ")
-                .xy(vec2(x * UNIT_RADIUS * 0.93, y * UNIT_RADIUS * 0.93))
-                .layout(&font_layout(13, Regular, Center))
-                .color(WHITE);
+                .xy(self.label_fading.theta_pos)
+                .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
+                .color(Rgba::new(
+                    1.0, 1.0, 1.0, self.label_fading.theta_label_opacity,
+                ));
         }
 
         // needed to prevent nan error
@@ -403,9 +430,12 @@ impl Model {
 
         if self.draw_labels {
             draw.text(COS_LABEL)
-                .xy(vec2(self.trig_values_scaled.cos * 0.5, 15.0))
-                .layout(&font_layout(13, Regular, Center))
-                .color(COS_COLOR);
+                .xy(self.label_fading.cos_pos)
+                .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
+                .color(Rgba::new(
+                    COS_COLOR.red, COS_COLOR.green, COS_COLOR.blue,
+                    self.label_fading.cos_label_opacity,
+                ));
         }
     }
 
@@ -418,12 +448,12 @@ impl Model {
 
         if self.draw_labels {
             draw.text(SIN_LABEL)
-                .xy(vec2(
-                    self.trig_values_scaled.cos + 22.0,
-                    self.trig_values_scaled.sin * 0.5,
-                ))
-                .layout(&font_layout(13, Regular, Center))
-                .color(SIN_COLOR);
+                .xy(self.label_fading.sin_pos)
+                .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
+                .color(Rgba::new(
+                    SIN_COLOR.red, SIN_COLOR.green, SIN_COLOR.blue,
+                    self.label_fading.sin_label_opacity,
+                ));
         }
     }
 
@@ -436,8 +466,8 @@ impl Model {
 
         if self.draw_labels {
             draw.text(TAN_LABEL)
-                .xy(vec2(UNIT_RADIUS + 23.0, self.trig_values_scaled.tan * 0.5))
-                .layout(&font_layout(13, Regular, Center))
+                .xy(self.label_fading.tan_pos)
+                .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
                 .color(TAN_COLOR);
         }
     }
@@ -452,17 +482,9 @@ impl Model {
             .stroke_weight(STROKE_WEIGHT);
 
         if self.draw_labels {
-            let x_dir = if self.theta >= PI { -1.0 } else { 1.0 };
             draw.text(COT_LABEL)
-                .xy(vec2(
-                    self.trig_values_scaled.cos * 0.5
-                        + (x_dir * self.trig_values.cos * 20.0),
-                    (self.trig_values_scaled.sin + self.trig_values_scaled.csc)
-                        * 0.5
-                        + 12.0
-                        + (self.trig_values.sin.abs() * 8.0),
-                ))
-                .layout(&font_layout(13, Regular, Center))
+                .xy(self.label_fading.cot_pos)
+                .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
                 .color(COT_COLOR);
         }
     }
@@ -476,11 +498,8 @@ impl Model {
 
         if self.draw_labels {
             draw.text(SEC_LABEL)
-                .xy(vec2(
-                    UNIT_RADIUS * 0.5 - (self.trig_values.tan * 7.0),
-                    self.trig_values_scaled.tan * 0.5 + 18.0,
-                ))
-                .layout(&font_layout(13, Regular, Center))
+                .xy(self.label_fading.sec_pos)
+                .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
                 .color(SEC_COLOR);
         }
     }
@@ -494,8 +513,8 @@ impl Model {
 
         if self.draw_labels {
             draw.text(CSC_LABEL)
-                .xy(vec2(-25.0, self.trig_values_scaled.csc * 0.5))
-                .layout(&font_layout(13, Regular, Center))
+                .xy(self.label_fading.csc_pos)
+                .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
                 .color(CSC_COLOR);
         }
     }
@@ -508,15 +527,12 @@ impl Model {
             .stroke_weight(STROKE_WEIGHT - 0.8);
 
         if self.draw_labels {
-            let (y, x) = (self.theta - PI * 0.5).sin_cos();
-
             draw.text("1.0")
-                .xy(vec2(
-                    self.trig_values_scaled.cos * 0.5 + 15.0 * x,
-                    self.trig_values_scaled.sin * 0.5 + 15.0 * y,
-                ))
+                .xy(self.label_fading.unit_pos)
                 .layout(&font_layout(13, Regular, Center))
-                .color(LIGHTGREY);
+                .color(Rgba::new(
+                    0.8, 0.8, 0.8, self.label_fading.unit_label_opacity,
+                ));
         }
     }
 }
@@ -535,6 +551,7 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn view(app: &App, model: &Model, frame: Frame) {
     let draw = &app.draw().translate(vec3(-120.0, 0.0, 0.0));
     draw.background().color(BLACK);

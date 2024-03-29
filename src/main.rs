@@ -1,5 +1,7 @@
 use nannou::prelude::*;
 
+mod consts;
+mod labels;
 mod model;
 use model::Model;
 
