@@ -1,6 +1,6 @@
 # Trigonometric function visualisation
 
-<!-- link -->
+https://github.com/jamiegibney/trig_visuals/assets/123845103/520d5199-d75e-46b1-8cd2-9b7ac74ab6ff
 
 A simple visualisation of common trigonometric functions on a [unit circle](https://en.wikipedia.org/wiki/Unit_circle).
 
