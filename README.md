@@ -8,17 +8,17 @@ Made using the [nannou](https://github.com/nannou-org/nannou) library for Rust. 
 
 ## Visualised functions
 
-$\color{red}\mathrm{sin}\ θ\color{none} = \frac{O}{H}$
+$\mathrm{sin}\ θ = \frac{O}{H}$
 
-$\color{orange}\mathrm{cos}\ θ\color{none} = \frac{A}{H}$
+$\mathrm{cos}\ θ = \frac{A}{H}$
 
-$\color{lime}\mathrm{tan}\ θ\color{none} = \frac{O}{A}$
+$\mathrm{tan}\ θ = \frac{O}{A}$
 
-$\color{aqua}\mathrm{cot}\ θ\color{none} = \frac{A}{O} = \frac{1}{\mathrm{tan}\ θ}$
+$\mathrm{cot}\ θ = \frac{A}{O} = \frac{1}{\mathrm{tan}\ θ}$
 
-$\color{blue}\mathrm{sec}\ θ\color{none} = \frac{H}{A} = \frac{1}{\mathrm{cos}\ θ}$
+$\mathrm{sec}\ θ = \frac{H}{A} = \frac{1}{\mathrm{cos}\ θ}$
 
-$\color{magenta}\mathrm{csc}\ θ\color{none} = \frac{H}{O} = \frac{1}{\mathrm{sin}\ θ}$
+$\mathrm{csc}\ θ = \frac{H}{O} = \frac{1}{\mathrm{sin}\ θ}$
 
 </br>
 
