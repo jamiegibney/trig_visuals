@@ -66,14 +66,6 @@ impl Clone for LabelData {
 pub struct Labels {
     label_map: HashMap<Label, LabelData>,
 
-    // pub sin_pos: Vec2,
-    // pub cos_pos: Vec2,
-    // pub tan_pos: Vec2,
-    // pub cot_pos: Vec2,
-    // pub sec_pos: Vec2,
-    // pub csc_pos: Vec2,
-    // pub theta_pos: Vec2,
-    // pub unit_pos: Vec2,
     fade_out_secs: f32,
     fade_in_secs: f32,
     fade_intensity: f32,
@@ -97,15 +89,7 @@ impl Labels {
         Self {
             label_map,
 
-            // sin_pos: Vec2::ZERO,
-            // cos_pos: Vec2::ZERO,
-            // tan_pos: Vec2::ZERO,
-            // cot_pos: Vec2::ZERO,
-            // sec_pos: Vec2::ZERO,
-            // csc_pos: Vec2::ZERO,
-            // theta_pos: Vec2::ZERO,
-            // unit_pos: Vec2::ZERO,
-            fade_in_secs: FADE_TIME_SECS,
+            fade_in_secs: FADE_TIME_SECS * 3.0,
             fade_out_secs: FADE_TIME_SECS,
             fade_intensity: FADE_INTENSITY,
         }

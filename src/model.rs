@@ -200,11 +200,14 @@ impl Model {
         );
 
         // sec
-        let sec_offset = self.trig_values.tan.signum() * self.trig_values.sin.abs();
+        let sec_offset =
+            self.trig_values.tan.signum() * self.trig_values.sin.abs();
         self.label_fades.update_position(
             Label::Sec,
             vec2(
-                UNIT_RADIUS * 0.5 - (self.trig_values.tan * 5.0) - sec_offset * 10.0,
+                UNIT_RADIUS * 0.5
+                    - (self.trig_values.tan * 5.0)
+                    - sec_offset * 10.0,
                 self.trig_values_scaled.tan * 0.5 + 18.0,
             ),
         );
@@ -312,31 +315,29 @@ impl Model {
     // Draw methods
 
     pub fn draw_bg_lines(&self, draw: &Draw) {
-        let color = if self.theme.is_dark() { 0.6 } else { 0.4 };
+        let color = if self.theme.is_dark() { 1.0 } else { 0.0 };
 
         draw.line()
             .stroke_weight(STROKE_WEIGHT - 1.0)
             .start(vec2(-1000.0, 0.0))
             .end(vec2(1000.0, 0.0))
-            .color(Rgb::new(color, color, color));
+            .color(Rgba::new(color, color, color, 0.15));
 
         draw.line()
             .stroke_weight(STROKE_WEIGHT - 1.0)
             .start(vec2(0.0, 1000.0))
             .end(vec2(0.0, -1000.0))
-            .color(Rgb::new(color, color, color));
-
-        self.draw_unit_line(draw);
+            .color(Rgba::new(color, color, color, 0.15));
     }
 
     pub fn draw_unit_circle(&self, draw: &Draw) {
-        let color = if self.theme.is_dark() { 0.6 } else { 0.4 };
+        let color = if self.theme.is_dark() { 1.0 } else { 0.0 };
 
         draw.ellipse()
             .no_fill()
             .radius(UNIT_RADIUS)
             .stroke_weight(STROKE_WEIGHT - 0.3)
-            .stroke(Rgb::new(color, color, color))
+            .stroke(Rgba::new(color, color, color, 0.3))
             .xy(Vec2::ZERO);
 
         if self.draw_theta {
@@ -350,9 +351,11 @@ impl Model {
             self.trig_values.sin * UNIT_RADIUS,
         );
 
+        let color = if self.theme.is_dark() { 1.0 } else { 0.0 };
+
         draw.ellipse()
             .radius(8.0)
-            .color(if self.theme.is_dark() { WHITE } else { BLACK })
+            .color(Rgba::new(color, color, color, 0.75))
             .xy(pt);
     }
 
@@ -363,6 +366,7 @@ impl Model {
         self.draw_cot_line(draw);
         self.draw_sec_line(draw);
         self.draw_csc_line(draw);
+        self.draw_unit_line(draw);
     }
 
     pub fn draw_values(&self, draw: &Draw) {
@@ -615,8 +619,8 @@ impl Model {
         draw.line()
             .start(Vec2::ZERO)
             .end(vec2(self.trig_values_scaled.cos, self.trig_values_scaled.sin))
-            .color(GREY)
-            .stroke_weight(STROKE_WEIGHT - 0.8);
+            .color(Rgba::new(1.0, 1.0, 1.0, 0.2))
+            .stroke_weight(STROKE_WEIGHT);
 
         if self.draw_labels {
             let unit_color = if self.theme.is_dark() { 0.8 } else { 0.2 };
