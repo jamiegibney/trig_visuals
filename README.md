@@ -8,18 +8,27 @@ Made using the [nannou](https://github.com/nannou-org/nannou) library for Rust. 
 
 ## Visualised functions
 
-$$
-\mathrm{sin}\ θ = \frac{O}{H}\\
-\mathrm{cos}\ θ = \frac{A}{H}\\
-\mathrm{tan}\ θ = \frac{O}{A}\\
-\mathrm{csc}\ θ = \frac{H}{O} = \frac{1}{\mathrm{sin}\ θ}\\
-\mathrm{sec}\ θ = \frac{H}{A} = \frac{1}{\mathrm{cos}\ θ}\\
-\mathrm{cot}\ θ = \frac{A}{O} = \frac{1}{\mathrm{tan}\ θ}\\
-$$
+$\mathrm{sin}\ θ = \frac{O}{H}$
+
+$\mathrm{cos}\ θ = \frac{A}{H}$
+
+$\mathrm{tan}\ θ = \frac{O}{A}$
+
+$\mathrm{csc}\ θ = \frac{H}{O} = \frac{1}{\mathrm{sin}\ θ}$
+
+$\mathrm{sec}\ θ = \frac{H}{A} = \frac{1}{\mathrm{cos}\ θ}$
+
+$\mathrm{cot}\ θ = \frac{A}{O} = \frac{1}{\mathrm{tan}\ θ}$
 
 </br>
 
-$$A = \mathrm{Adjacent\ side}\\ O = \mathrm{Opposite\ side}\\ H = \mathrm{Hypotenuse}\\ θ = \mathrm{Theta\ (current\ angle\ in\ radians)}$$
+$A = \mathrm{Adjacent\ side}$
+
+$O = \mathrm{Opposite\ side}$
+
+$H = \mathrm{Hypotenuse}$
+
+$θ = \mathrm{Theta\ (current\ angle\ in\ radians)}$
 
 ## Keymap
 - `Space` → toggle motion
