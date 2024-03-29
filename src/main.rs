@@ -1,7 +1,5 @@
 use nannou::prelude::*;
 
-mod view;
-
 mod model;
 use model::Model;
 
@@ -14,7 +12,5 @@ fn main() {
 }
 
 fn update(_app: &App, model: &mut Model, update: Update) {
-    let delta_time = update.since_last.as_secs_f32();
-    model.update_theta(delta_time);
-    model.compute_trig_values();
+    model.update(update.since_last.as_secs_f32());
 }

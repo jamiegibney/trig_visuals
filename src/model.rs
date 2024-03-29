@@ -1,5 +1,5 @@
 #![allow(clippy::suboptimal_flops)]
-use crate::{view::view, ITALIC_FONT, REGULAR_FONT};
+use crate::{ITALIC_FONT, REGULAR_FONT};
 use nannou::{
     prelude::*,
     text::{
@@ -39,6 +39,15 @@ enum FontType {
     Italic,
 }
 
+impl FontType {
+    pub const fn into_font(self) -> &'static [u8] {
+        match self {
+            Regular => REGULAR_FONT,
+            Italic => ITALIC_FONT,
+        }
+    }
+}
+
 fn font_layout(
     font_size: u32,
     font_type: FontType,
@@ -47,11 +56,7 @@ fn font_layout(
     Layout {
         justify,
         font_size,
-        font: Font::from_bytes(match font_type {
-            Regular => REGULAR_FONT,
-            Italic => ITALIC_FONT,
-        })
-        .ok(),
+        font: Font::from_bytes(font_type.into_font()).ok(),
         ..Default::default()
     }
 }
@@ -87,10 +92,10 @@ impl std::ops::Mul<f32> for TrigValues {
     }
 }
 
+// --- *** --- //
+
 #[allow(clippy::struct_excessive_bools)]
 pub struct Model {
-    _window: window::Id,
-
     theta: f32,
     rate: f32,
 
@@ -105,7 +110,7 @@ pub struct Model {
 
 impl Model {
     pub fn new(app: &App) -> Self {
-        let _window = app
+        _ = app
             .new_window()
             .size(800, 800)
             .view(view)
@@ -114,11 +119,12 @@ impl Model {
             .unwrap();
 
         Self {
-            _window,
             theta: 0.0,
             rate: DEFAULT_RATE,
+
             trig_values: TrigValues::default(),
             trig_values_scaled: TrigValues::default(),
+
             is_running: true,
             draw_labels: true,
             draw_values: true,
@@ -126,7 +132,14 @@ impl Model {
         }
     }
 
-    pub fn update_theta(&mut self, delta_time: f32) {
+    // Update methods
+
+    pub fn update(&mut self, delta_time: f32) {
+        self.update_theta(delta_time);
+        self.compute_trig_values();
+    }
+
+    fn update_theta(&mut self, delta_time: f32) {
         if !self.is_running {
             return;
         }
@@ -138,7 +151,7 @@ impl Model {
         }
     }
 
-    pub fn compute_trig_values(&mut self) {
+    fn compute_trig_values(&mut self) {
         let TrigValues { sin, cos, tan, cot, sec, csc } = &mut self.trig_values;
 
         *sin = self.theta.sin();
@@ -150,6 +163,8 @@ impl Model {
 
         self.trig_values_scaled = self.trig_values * UNIT_RADIUS;
     }
+
+    // Setting methods
 
     pub fn increment_rate(&mut self) {
         self.rate += RATE_INCREMENT;
@@ -182,6 +197,8 @@ impl Model {
     pub fn reset_rate(&mut self) {
         self.rate = DEFAULT_RATE;
     }
+
+    // Draw methods
 
     pub fn draw_bg_lines(&self, draw: &Draw) {
         draw.line()
@@ -278,6 +295,8 @@ impl Model {
             .color(WHITE);
         }
     }
+
+    // Private draw methods
 
     fn draw_theta_circle(&self, draw: &Draw) {
         const THETA_POINTS: usize = 128;
@@ -444,4 +463,17 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
         Key::S => model.reset_rate(),
         _ => {}
     }
+}
+
+fn view(app: &App, model: &Model, frame: Frame) {
+    let draw = &app.draw().translate(vec3(-120.0, 0.0, 0.0));
+    draw.background().color(BLACK);
+
+    model.draw_bg_lines(draw);
+    model.draw_unit_circle(draw);
+    model.draw_trig_lines(draw);
+    model.draw_node(draw);
+    model.draw_values(draw);
+
+    draw.to_frame(app, &frame).unwrap();
 }
