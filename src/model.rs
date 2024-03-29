@@ -1,3 +1,4 @@
+#![allow(clippy::suboptimal_flops)]
 use crate::{view::view, ITALIC_FONT, REGULAR_FONT};
 use nannou::{
     prelude::*,
@@ -7,10 +8,14 @@ use nannou::{
         Layout,
     },
 };
-use std::{f32::consts::TAU, marker::PhantomData as PD};
+use std::{
+    f32::consts::{PI, TAU},
+    marker::PhantomData as PD,
+};
 use FontType::{Italic, Regular};
 
-const DEFAULT_RATE: f32 = 0.007;
+const DEFAULT_RATE: f32 = 0.25;
+const RATE_INCREMENT: f32 = 0.08;
 const STROKE_WEIGHT: f32 = 3.0;
 const UNIT_RADIUS: f32 = 200.0;
 
@@ -26,7 +31,7 @@ const COS_COLOR: Rgb = Rgb { red: 0.0, green: 1.0, blue: 0.0, standard: PD };
 const TAN_COLOR: Rgb = Rgb { red: 1.0, green: 1.0, blue: 0.0, standard: PD };
 const COT_COLOR: Rgb = Rgb { red: 1.0, green: 0.5, blue: 0.0, standard: PD };
 const SEC_COLOR: Rgb = Rgb { red: 1.0, green: 0.0, blue: 1.0, standard: PD };
-const CSC_COLOR: Rgb = Rgb { red: 0.0, green: 0.5, blue: 1.0, standard: PD };
+const CSC_COLOR: Rgb = Rgb { red: 0.0, green: 1.0, blue: 1.0, standard: PD };
 
 enum FontType {
     Regular,
@@ -83,6 +88,7 @@ impl std::ops::Mul<f32> for TrigValues {
     }
 }
 
+#[allow(clippy::struct_excessive_bools)]
 pub struct Model {
     _window: window::Id,
     win_rect: Rect,
@@ -96,6 +102,7 @@ pub struct Model {
     is_running: bool,
     draw_labels: bool,
     draw_values: bool,
+    draw_theta: bool,
 }
 
 impl Model {
@@ -118,15 +125,16 @@ impl Model {
             is_running: true,
             draw_labels: true,
             draw_values: true,
+            draw_theta: true,
         }
     }
 
-    pub fn update_theta(&mut self) {
+    pub fn update_theta(&mut self, delta_time: f32) {
         if !self.is_running {
             return;
         }
 
-        self.theta += self.rate;
+        self.theta += self.rate * delta_time;
 
         if self.theta >= TAU {
             self.theta -= TAU;
@@ -147,11 +155,11 @@ impl Model {
     }
 
     pub fn increment_rate(&mut self) {
-        self.rate += 0.001;
+        self.rate += RATE_INCREMENT;
     }
 
     pub fn decrement_rate(&mut self) {
-        self.rate = f32::max(0.0, self.rate - 0.001);
+        self.rate = f32::max(0.0, self.rate - RATE_INCREMENT);
     }
 
     pub fn toggle_running(&mut self) {
@@ -166,12 +174,16 @@ impl Model {
         self.draw_values = !self.draw_values;
     }
 
+    pub fn toggle_theta(&mut self) {
+        self.draw_theta = !self.draw_theta;
+    }
+
     pub fn draw_bg_lines(&self, draw: &Draw) {
         let ml = self.win_rect.mid_left();
         let mr = self.win_rect.mid_right();
 
         draw.line()
-            .stroke_weight(STROKE_WEIGHT - 0.3)
+            .stroke_weight(STROKE_WEIGHT - 1.0)
             .start(ml)
             .end(vec2(1000.0, 0.0))
             .color(GREY);
@@ -180,7 +192,7 @@ impl Model {
         let bot = self.win_rect.mid_bottom();
 
         draw.line()
-            .stroke_weight(STROKE_WEIGHT - 0.3)
+            .stroke_weight(STROKE_WEIGHT - 1.0)
             .start(top)
             .end(bot)
             .color(GREY);
@@ -193,8 +205,12 @@ impl Model {
             .no_fill()
             .radius(UNIT_RADIUS)
             .stroke_weight(STROKE_WEIGHT - 0.3)
-            .stroke(WHITE)
+            .stroke(GREY)
             .xy(Vec2::ZERO);
+
+        if self.draw_theta {
+            self.draw_theta_circle(draw);
+        }
     }
 
     pub fn draw_node(&self, draw: &Draw) {
@@ -221,35 +237,73 @@ impl Model {
         }
 
         // sin
-        draw.text(&format!("{} = {:.3}", SIN_LABEL, self.trig_values.sin))
+        draw.text(&format!("{} = {:.2}", SIN_LABEL, self.trig_values.sin))
             .xy(vec2(430.0, 150.0))
             .layout(&label_layout(18, Italic, Left))
             .color(SIN_COLOR);
         // cos
-        draw.text(&format!("{} = {:.3}", COS_LABEL, self.trig_values.cos))
+        draw.text(&format!("{} = {:.2}", COS_LABEL, self.trig_values.cos))
             .xy(vec2(430.0, 100.0))
             .layout(&label_layout(18, Italic, Left))
             .color(COS_COLOR);
         // tan
-        draw.text(&format!("{} = {:.3}", TAN_LABEL, self.trig_values.tan))
+        draw.text(&format!("{} = {:.2}", TAN_LABEL, self.trig_values.tan))
             .xy(vec2(430.0, 50.0))
             .layout(&label_layout(18, Italic, Left))
             .color(TAN_COLOR);
         // cot
-        draw.text(&format!("{} = {:.3}", COT_LABEL, self.trig_values.cot))
+        draw.text(&format!("{} = {:.2}", COT_LABEL, self.trig_values.cot))
             .xy(vec2(430.0, -50.0))
             .layout(&label_layout(18, Italic, Left))
             .color(COT_COLOR);
         // sec
-        draw.text(&format!("{} = {:.3}", SEC_LABEL, self.trig_values.sec))
+        draw.text(&format!("{} = {:.2}", SEC_LABEL, self.trig_values.sec))
             .xy(vec2(430.0, -100.0))
             .layout(&label_layout(18, Italic, Left))
             .color(SEC_COLOR);
         // csc
-        draw.text(&format!("{} = {:.3}", CSC_LABEL, self.trig_values.csc))
+        draw.text(&format!("{} = {:.2}", CSC_LABEL, self.trig_values.csc))
             .xy(vec2(430.0, -150.0))
             .layout(&label_layout(18, Italic, Left))
             .color(CSC_COLOR);
+
+        // theta
+        if self.draw_theta {
+            draw.text(&format!(
+                "θ = {:.2} ({:.0}º)",
+                self.theta,
+                self.theta.to_degrees()
+            ))
+            .xy(vec2(430.0, 250.0))
+            .layout(&label_layout(18, Italic, Left))
+            .color(WHITE);
+        }
+    }
+
+    fn draw_theta_circle(&self, draw: &Draw) {
+        const THETA_POINTS: usize = 128;
+
+        let progress = self.theta / TAU;
+        let num_points = (THETA_POINTS as f32 * progress).ceil() as usize;
+
+        draw.path()
+            .stroke()
+            .weight(STROKE_WEIGHT)
+            .points_colored((0..=num_points).map(|i| {
+                let t = i as f32 / num_points as f32;
+                let (y, x) = (self.theta * t).sin_cos();
+
+                (vec2(x * UNIT_RADIUS, y * UNIT_RADIUS), WHITE)
+            }))
+            .finish();
+
+        if self.draw_labels {
+            let (y, x) = (self.theta * 0.5).sin_cos();
+            draw.text("θ")
+                .xy(vec2(x * UNIT_RADIUS * 0.95, y * UNIT_RADIUS * 0.95))
+                .layout(&label_layout(13, Regular, Center))
+                .color(WHITE);
+        }
     }
 
     fn draw_cos_line(&self, draw: &Draw) {
@@ -310,12 +364,15 @@ impl Model {
             .stroke_weight(STROKE_WEIGHT);
 
         if self.draw_labels {
+            let x_dir = if self.theta >= PI { -1.0 } else { 1.0 };
             draw.text(COT_LABEL)
                 .xy(vec2(
-                    self.trig_values_scaled.cos * 0.5 + 12.0,
+                    self.trig_values_scaled.cos * 0.5
+                        + (x_dir * self.trig_values.cos * 20.0),
                     (self.trig_values_scaled.sin + self.trig_values_scaled.csc)
                         * 0.5
-                        + 12.0,
+                        + 12.0
+                        + (self.trig_values.sin.abs() * 8.0),
                 ))
                 .layout(&label_layout(13, Regular, Center))
                 .color(COT_COLOR);
@@ -332,8 +389,8 @@ impl Model {
         if self.draw_labels {
             draw.text(SEC_LABEL)
                 .xy(vec2(
-                    UNIT_RADIUS * 0.5 + 12.0,
-                    self.trig_values_scaled.tan * 0.5 + 12.0,
+                    UNIT_RADIUS * 0.5 - (self.trig_values.tan * 7.0),
+                    self.trig_values_scaled.tan * 0.5 + 18.0,
                 ))
                 .layout(&label_layout(13, Regular, Center))
                 .color(SEC_COLOR);
@@ -379,6 +436,7 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
         Key::Space => model.toggle_running(),
         Key::L => model.toggle_labels(),
         Key::V => model.toggle_values(),
+        Key::T => model.toggle_theta(),
         Key::Up => model.increment_rate(),
         Key::Down => model.decrement_rate(),
         _ => {}

@@ -13,7 +13,8 @@ fn main() {
     nannou::app(Model::new).update(update).run();
 }
 
-fn update(_app: &App, model: &mut Model, _update: Update) {
-    model.update_theta();
+fn update(_app: &App, model: &mut Model, update: Update) {
+    let delta_time = update.since_last.as_secs_f32();
+    model.update_theta(delta_time);
     model.compute_trig_values();
 }
