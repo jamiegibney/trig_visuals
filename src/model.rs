@@ -602,7 +602,7 @@ impl Model {
             rate,
             rate.to_degrees()
         ))
-        .xy(vec2(430.0, -200.0))
+        .xy(vec2(430.0, -210.0))
         .layout(&font_layout(18, Italic, Left))
         .color(Rgb::new(rate_color, rate_color, rate_color));
     }
