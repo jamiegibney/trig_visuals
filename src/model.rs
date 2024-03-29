@@ -46,13 +46,11 @@ fn label_layout(
     Layout {
         justify,
         font_size,
-        font: Some(
-            Font::from_bytes(match font_type {
-                Regular => REGULAR_FONT,
-                Italic => ITALIC_FONT,
-            })
-            .expect("failed to load font"),
-        ),
+        font: Font::from_bytes(match font_type {
+            Regular => REGULAR_FONT,
+            Italic => ITALIC_FONT,
+        })
+        .ok(),
         ..Default::default()
     }
 }
