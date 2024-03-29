@@ -21,5 +21,5 @@ pub const SIN_COLOR: Rgb = Rgb { red: 1.0, green: 0.0, blue: 0.0, standard: PD }
 pub const COS_COLOR: Rgb = Rgb { red: 1.0, green: 1.0, blue: 0.0, standard: PD };
 pub const TAN_COLOR: Rgb = Rgb { red: 0.0, green: 1.0, blue: 0.0, standard: PD };
 pub const COT_COLOR: Rgb = Rgb { red: 0.0, green: 1.0, blue: 1.0, standard: PD };
-pub const SEC_COLOR: Rgb = Rgb { red: 0.1, green: 0.1, blue: 1.0, standard: PD };
+pub const SEC_COLOR: Rgb = Rgb { red: 0.0, green: 0.4, blue: 1.0, standard: PD };
 pub const CSC_COLOR: Rgb = Rgb { red: 1.0, green: 0.0, blue: 1.0, standard: PD };

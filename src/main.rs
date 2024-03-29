@@ -13,6 +13,10 @@ fn main() {
     nannou::app(Model::new).update(update).run();
 }
 
-fn update(_app: &App, model: &mut Model, update: Update) {
-    model.update(update.since_last.as_secs_f32());
+fn update(app: &App, model: &mut Model, update: Update) {
+    model.update(
+        update.since_last.as_secs_f32(),
+        app.mouse.position(),
+        app.mouse.buttons.left().is_down(),
+    );
 }
