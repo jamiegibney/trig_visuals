@@ -179,22 +179,16 @@ impl Model {
     }
 
     pub fn draw_bg_lines(&self, draw: &Draw) {
-        let ml = self.win_rect.mid_left();
-        let mr = self.win_rect.mid_right();
-
         draw.line()
             .stroke_weight(STROKE_WEIGHT - 1.0)
-            .start(ml)
+            .start(vec2(-1000.0, 0.0))
             .end(vec2(1000.0, 0.0))
             .color(GREY);
 
-        let top = self.win_rect.mid_top();
-        let bot = self.win_rect.mid_bottom();
-
         draw.line()
             .stroke_weight(STROKE_WEIGHT - 1.0)
-            .start(top)
-            .end(bot)
+            .start(vec2(0.0, 1000.0))
+            .end(vec2(0.0, -1000.0))
             .color(GREY);
 
         self.draw_unit_line(draw);
@@ -274,7 +268,7 @@ impl Model {
                 self.theta,
                 self.theta.to_degrees()
             ))
-            .xy(vec2(430.0, 250.0))
+            .xy(vec2(430.0, 200.0))
             .layout(&label_layout(18, Italic, Left))
             .color(WHITE);
         }
