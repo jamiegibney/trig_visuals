@@ -6,8 +6,6 @@ A simple visualisation of common trigonometric functions on a [unit circle](http
 
 Made using the [nannou](https://github.com/nannou-org/nannou) library for Rust. Inspired by [this video](https://youtu.be/Dsf6ADwJ66E?si=xC_gJOOfiLqyZQ35).
 
----
-
 ## Visualised functions
 
 $$\mathrm{sin}\ θ = \frac{O}{H}$$
