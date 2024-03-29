@@ -200,10 +200,11 @@ impl Model {
         );
 
         // sec
+        let sec_offset = self.trig_values.tan.signum() * self.trig_values.sin.abs();
         self.label_fades.update_position(
             Label::Sec,
             vec2(
-                UNIT_RADIUS * 0.5 - (self.trig_values.tan * 7.0),
+                UNIT_RADIUS * 0.5 - (self.trig_values.tan * 5.0) - sec_offset * 10.0,
                 self.trig_values_scaled.tan * 0.5 + 18.0,
             ),
         );
