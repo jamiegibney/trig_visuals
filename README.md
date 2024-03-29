@@ -37,5 +37,8 @@ $θ = \mathrm{Theta\ (current\ angle\ in\ radians)}$
 - `T` → toggle visual of theta $θ$
 - `R` → reset theta $θ$
 - `S` → reset motion rate
+- `=` → increase circle scale
+- `-` → decrease circle scale
+- `0` → reset circle scale
 - `Up` → increase motion rate
 - `Down` → decrease motion rate
