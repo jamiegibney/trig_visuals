@@ -9,7 +9,10 @@ use nannou::{
     },
 };
 use std::{
-    f32::consts::{PI, TAU},
+    f32::{
+        consts::{PI, TAU},
+        MAX as INF,
+    },
     marker::PhantomData as PD,
 };
 use FontType::{Italic, Regular};
@@ -57,11 +60,12 @@ fn font_layout(
         justify,
         font_size,
         font: Font::from_bytes(font_type.into_font()).ok(),
+        line_spacing: 3.0,
         ..Default::default()
     }
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 struct TrigValues {
     /// Sine function
     pub sin: f32,
@@ -75,6 +79,22 @@ struct TrigValues {
     pub sec: f32,
     /// Cosecant function
     pub csc: f32,
+}
+
+impl TrigValues {
+    pub fn clamp_inf(&mut self) {
+        let set_inf = |value: &mut f32| {
+            if value.is_infinite() {
+                *value = if value.is_sign_positive() { INF } else { -INF };
+            }
+        };
+
+        // these can be infinite, so this prevents some drawing errors
+        set_inf(&mut self.tan);
+        set_inf(&mut self.cot);
+        set_inf(&mut self.sec);
+        set_inf(&mut self.csc);
+    }
 }
 
 impl std::ops::Mul<f32> for TrigValues {
@@ -95,6 +115,7 @@ impl std::ops::Mul<f32> for TrigValues {
 // --- *** --- //
 
 #[allow(clippy::struct_excessive_bools)]
+#[derive(Debug)]
 pub struct Model {
     theta: f32,
     rate: f32,
@@ -162,6 +183,10 @@ impl Model {
         *csc = sin.recip();
 
         self.trig_values_scaled = self.trig_values * UNIT_RADIUS;
+
+        // some values can be inf, so this is needed to prevent a geometry error!
+        self.trig_values.clamp_inf();
+        self.trig_values_scaled.clamp_inf();
     }
 
     // Setting methods
@@ -252,6 +277,20 @@ impl Model {
             return;
         }
 
+        // some values can be infinite (clamped to f32::MAX), so this
+        // handles very large values in such a case
+        let fmt_large = |val: f32| {
+            if val > 1.0e9 {
+                String::from("inf")
+            }
+            else if val < -1.0e9 {
+                String::from("-inf")
+            }
+            else {
+                format!("{val:.2}")
+            }
+        };
+
         // sin
         draw.text(&format!("{} = {:.2}", SIN_LABEL, self.trig_values.sin))
             .xy(vec2(430.0, 150.0))
@@ -263,25 +302,41 @@ impl Model {
             .layout(&font_layout(18, Italic, Left))
             .color(COS_COLOR);
         // tan
-        draw.text(&format!("{} = {:.2}", TAN_LABEL, self.trig_values.tan))
-            .xy(vec2(430.0, 50.0))
-            .layout(&font_layout(18, Italic, Left))
-            .color(TAN_COLOR);
+        draw.text(&format!(
+            "{} = {}",
+            TAN_LABEL,
+            fmt_large(self.trig_values.tan)
+        ))
+        .xy(vec2(430.0, 50.0))
+        .layout(&font_layout(18, Italic, Left))
+        .color(TAN_COLOR);
         // cot
-        draw.text(&format!("{} = {:.2}", COT_LABEL, self.trig_values.cot))
-            .xy(vec2(430.0, -50.0))
-            .layout(&font_layout(18, Italic, Left))
-            .color(COT_COLOR);
+        draw.text(&format!(
+            "{} = {}",
+            COT_LABEL,
+            fmt_large(self.trig_values.cot)
+        ))
+        .xy(vec2(430.0, -50.0))
+        .layout(&font_layout(18, Italic, Left))
+        .color(COT_COLOR);
         // sec
-        draw.text(&format!("{} = {:.2}", SEC_LABEL, self.trig_values.sec))
-            .xy(vec2(430.0, -100.0))
-            .layout(&font_layout(18, Italic, Left))
-            .color(SEC_COLOR);
+        draw.text(&format!(
+            "{} = {}",
+            SEC_LABEL,
+            fmt_large(self.trig_values.sec)
+        ))
+        .xy(vec2(430.0, -100.0))
+        .layout(&font_layout(18, Italic, Left))
+        .color(SEC_COLOR);
         // csc
-        draw.text(&format!("{} = {:.2}", CSC_LABEL, self.trig_values.csc))
-            .xy(vec2(430.0, -150.0))
-            .layout(&font_layout(18, Italic, Left))
-            .color(CSC_COLOR);
+        draw.text(&format!(
+            "{} = {}",
+            CSC_LABEL,
+            fmt_large(self.trig_values.csc)
+        ))
+        .xy(vec2(430.0, -150.0))
+        .layout(&font_layout(18, Italic, Left))
+        .color(CSC_COLOR);
 
         // theta
         if self.draw_theta {
@@ -294,6 +349,19 @@ impl Model {
             .layout(&font_layout(18, Italic, Left))
             .color(WHITE);
         }
+
+        let rate = if self.is_running { self.rate } else { 0.0 };
+
+        // rate
+        draw.text(&format!(
+            // TODO come on...
+            "rate = {:.2} rad/s\n           ({:.0} deg/s)",
+            rate,
+            rate.to_degrees()
+        ))
+        .xy(vec2(430.0, -200.0))
+        .layout(&font_layout(18, Italic, Left))
+        .color(GREY);
     }
 
     // Private draw methods
@@ -303,6 +371,19 @@ impl Model {
 
         let progress = self.theta / TAU;
         let num_points = (THETA_POINTS as f32 * progress).ceil() as usize;
+
+        if self.draw_labels {
+            let (y, x) = (self.theta * 0.5).sin_cos();
+            draw.text("θ")
+                .xy(vec2(x * UNIT_RADIUS * 0.93, y * UNIT_RADIUS * 0.93))
+                .layout(&font_layout(13, Regular, Center))
+                .color(WHITE);
+        }
+
+        // needed to prevent nan error
+        if num_points == 0 {
+            return;
+        }
 
         draw.path()
             .stroke()
@@ -314,14 +395,6 @@ impl Model {
                 (vec2(x * UNIT_RADIUS, y * UNIT_RADIUS), WHITE)
             }))
             .finish();
-
-        if self.draw_labels {
-            let (y, x) = (self.theta * 0.5).sin_cos();
-            draw.text("θ")
-                .xy(vec2(x * UNIT_RADIUS * 0.93, y * UNIT_RADIUS * 0.93))
-                .layout(&font_layout(13, Regular, Center))
-                .color(WHITE);
-        }
     }
 
     fn draw_cos_line(&self, draw: &Draw) {
