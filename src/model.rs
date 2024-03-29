@@ -39,7 +39,7 @@ enum FontType {
     Italic,
 }
 
-fn label_layout(
+fn font_layout(
     font_size: u32,
     font_type: FontType,
     justify: Justify,
@@ -230,32 +230,32 @@ impl Model {
         // sin
         draw.text(&format!("{} = {:.2}", SIN_LABEL, self.trig_values.sin))
             .xy(vec2(430.0, 150.0))
-            .layout(&label_layout(18, Italic, Left))
+            .layout(&font_layout(18, Italic, Left))
             .color(SIN_COLOR);
         // cos
         draw.text(&format!("{} = {:.2}", COS_LABEL, self.trig_values.cos))
             .xy(vec2(430.0, 100.0))
-            .layout(&label_layout(18, Italic, Left))
+            .layout(&font_layout(18, Italic, Left))
             .color(COS_COLOR);
         // tan
         draw.text(&format!("{} = {:.2}", TAN_LABEL, self.trig_values.tan))
             .xy(vec2(430.0, 50.0))
-            .layout(&label_layout(18, Italic, Left))
+            .layout(&font_layout(18, Italic, Left))
             .color(TAN_COLOR);
         // cot
         draw.text(&format!("{} = {:.2}", COT_LABEL, self.trig_values.cot))
             .xy(vec2(430.0, -50.0))
-            .layout(&label_layout(18, Italic, Left))
+            .layout(&font_layout(18, Italic, Left))
             .color(COT_COLOR);
         // sec
         draw.text(&format!("{} = {:.2}", SEC_LABEL, self.trig_values.sec))
             .xy(vec2(430.0, -100.0))
-            .layout(&label_layout(18, Italic, Left))
+            .layout(&font_layout(18, Italic, Left))
             .color(SEC_COLOR);
         // csc
         draw.text(&format!("{} = {:.2}", CSC_LABEL, self.trig_values.csc))
             .xy(vec2(430.0, -150.0))
-            .layout(&label_layout(18, Italic, Left))
+            .layout(&font_layout(18, Italic, Left))
             .color(CSC_COLOR);
 
         // theta
@@ -266,7 +266,7 @@ impl Model {
                 self.theta.to_degrees()
             ))
             .xy(vec2(430.0, 200.0))
-            .layout(&label_layout(18, Italic, Left))
+            .layout(&font_layout(18, Italic, Left))
             .color(WHITE);
         }
     }
@@ -292,7 +292,7 @@ impl Model {
             let (y, x) = (self.theta * 0.5).sin_cos();
             draw.text("θ")
                 .xy(vec2(x * UNIT_RADIUS * 0.93, y * UNIT_RADIUS * 0.93))
-                .layout(&label_layout(13, Regular, Center))
+                .layout(&font_layout(13, Regular, Center))
                 .color(WHITE);
         }
     }
@@ -307,7 +307,7 @@ impl Model {
         if self.draw_labels {
             draw.text(COS_LABEL)
                 .xy(vec2(self.trig_values_scaled.cos * 0.5, 15.0))
-                .layout(&label_layout(13, Regular, Center))
+                .layout(&font_layout(13, Regular, Center))
                 .color(COS_COLOR);
         }
     }
@@ -325,7 +325,7 @@ impl Model {
                     self.trig_values_scaled.cos + 22.0,
                     self.trig_values_scaled.sin * 0.5,
                 ))
-                .layout(&label_layout(13, Regular, Center))
+                .layout(&font_layout(13, Regular, Center))
                 .color(SIN_COLOR);
         }
     }
@@ -340,7 +340,7 @@ impl Model {
         if self.draw_labels {
             draw.text(TAN_LABEL)
                 .xy(vec2(UNIT_RADIUS + 23.0, self.trig_values_scaled.tan * 0.5))
-                .layout(&label_layout(13, Regular, Center))
+                .layout(&font_layout(13, Regular, Center))
                 .color(TAN_COLOR);
         }
     }
@@ -365,7 +365,7 @@ impl Model {
                         + 12.0
                         + (self.trig_values.sin.abs() * 8.0),
                 ))
-                .layout(&label_layout(13, Regular, Center))
+                .layout(&font_layout(13, Regular, Center))
                 .color(COT_COLOR);
         }
     }
@@ -383,7 +383,7 @@ impl Model {
                     UNIT_RADIUS * 0.5 - (self.trig_values.tan * 7.0),
                     self.trig_values_scaled.tan * 0.5 + 18.0,
                 ))
-                .layout(&label_layout(13, Regular, Center))
+                .layout(&font_layout(13, Regular, Center))
                 .color(SEC_COLOR);
         }
     }
@@ -398,7 +398,7 @@ impl Model {
         if self.draw_labels {
             draw.text(CSC_LABEL)
                 .xy(vec2(-25.0, self.trig_values_scaled.csc * 0.5))
-                .layout(&label_layout(13, Regular, Center))
+                .layout(&font_layout(13, Regular, Center))
                 .color(CSC_COLOR);
         }
     }
