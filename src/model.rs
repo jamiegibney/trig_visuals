@@ -33,6 +33,7 @@ const COT_COLOR: Rgb = Rgb { red: 1.0, green: 0.5, blue: 0.0, standard: PD };
 const SEC_COLOR: Rgb = Rgb { red: 1.0, green: 0.0, blue: 1.0, standard: PD };
 const CSC_COLOR: Rgb = Rgb { red: 0.0, green: 1.0, blue: 1.0, standard: PD };
 
+#[derive(Clone, Copy)]
 enum FontType {
     Regular,
     Italic,
@@ -89,7 +90,6 @@ impl std::ops::Mul<f32> for TrigValues {
 #[allow(clippy::struct_excessive_bools)]
 pub struct Model {
     _window: window::Id,
-    win_rect: Rect,
 
     theta: f32,
     rate: f32,
@@ -119,7 +119,6 @@ impl Model {
             rate: DEFAULT_RATE,
             trig_values: TrigValues::default(),
             trig_values_scaled: TrigValues::default(),
-            win_rect: app.main_window().rect(),
             is_running: true,
             draw_labels: true,
             draw_values: true,
@@ -411,6 +410,7 @@ impl Model {
             .color(GREY)
             .stroke_weight(STROKE_WEIGHT - 0.8);
 
+        // TODO(jamiegibney): get the positioning of this label correct
         // if self.draw_labels {
         //     draw.text("1.0")
         //         .xy(vec2(
