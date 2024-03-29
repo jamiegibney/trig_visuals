@@ -175,6 +175,14 @@ impl Model {
         self.draw_theta = !self.draw_theta;
     }
 
+    pub fn reset_theta(&mut self) {
+        self.theta = 0.0;
+    }
+
+    pub fn reset_rate(&mut self) {
+        self.rate = DEFAULT_RATE;
+    }
+
     pub fn draw_bg_lines(&self, draw: &Draw) {
         draw.line()
             .stroke_weight(STROKE_WEIGHT - 1.0)
@@ -432,6 +440,8 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
         Key::T => model.toggle_theta(),
         Key::Up => model.increment_rate(),
         Key::Down => model.decrement_rate(),
+        Key::R => model.reset_theta(),
+        Key::S => model.reset_rate(),
         _ => {}
     }
 }

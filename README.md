@@ -21,5 +21,7 @@ Visualised is:
 - `L` → toggle labels (attached to coloured lines)
 - `V` → toggle right-hand side values
 - `T` → toggle visual of theta $θ$
+- `R` → reset theta $θ$
+- `S` → reset motion rate
 - `Up` → increase motion rate
 - `Down` → decrease motion rate
