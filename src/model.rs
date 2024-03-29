@@ -294,7 +294,7 @@ impl Model {
         if self.draw_labels {
             let (y, x) = (self.theta * 0.5).sin_cos();
             draw.text("θ")
-                .xy(vec2(x * UNIT_RADIUS * 0.95, y * UNIT_RADIUS * 0.95))
+                .xy(vec2(x * UNIT_RADIUS * 0.93, y * UNIT_RADIUS * 0.93))
                 .layout(&label_layout(13, Regular, Center))
                 .color(WHITE);
         }
@@ -309,7 +309,7 @@ impl Model {
 
         if self.draw_labels {
             draw.text(COS_LABEL)
-                .xy(vec2(self.trig_values_scaled.cos * 0.5, 12.0))
+                .xy(vec2(self.trig_values_scaled.cos * 0.5, 15.0))
                 .layout(&label_layout(13, Regular, Center))
                 .color(COS_COLOR);
         }
@@ -325,7 +325,7 @@ impl Model {
         if self.draw_labels {
             draw.text(SIN_LABEL)
                 .xy(vec2(
-                    self.trig_values_scaled.cos + 20.0,
+                    self.trig_values_scaled.cos + 22.0,
                     self.trig_values_scaled.sin * 0.5,
                 ))
                 .layout(&label_layout(13, Regular, Center))
@@ -342,7 +342,7 @@ impl Model {
 
         if self.draw_labels {
             draw.text(TAN_LABEL)
-                .xy(vec2(UNIT_RADIUS + 20.0, self.trig_values_scaled.tan * 0.5))
+                .xy(vec2(UNIT_RADIUS + 23.0, self.trig_values_scaled.tan * 0.5))
                 .layout(&label_layout(13, Regular, Center))
                 .color(TAN_COLOR);
         }
@@ -400,7 +400,7 @@ impl Model {
 
         if self.draw_labels {
             draw.text(CSC_LABEL)
-                .xy(vec2(-20.0, self.trig_values_scaled.csc * 0.5))
+                .xy(vec2(-25.0, self.trig_values_scaled.csc * 0.5))
                 .layout(&label_layout(13, Regular, Center))
                 .color(CSC_COLOR);
         }
