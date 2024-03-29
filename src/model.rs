@@ -410,16 +410,17 @@ impl Model {
             .color(GREY)
             .stroke_weight(STROKE_WEIGHT - 0.8);
 
-        // TODO(jamiegibney): get the positioning of this label correct
-        // if self.draw_labels {
-        //     draw.text("1.0")
-        //         .xy(vec2(
-        //             self.trig_values_scaled.cos * 0.5 + 10.0,
-        //             self.trig_values_scaled.sin * 0.5 - 10.0,
-        //         ))
-        //         .layout(&label_layout())
-        //         .color(WHITE);
-        // }
+        if self.draw_labels {
+            let (y, x) = (self.theta - PI * 0.5).sin_cos();
+
+            draw.text("1.0")
+                .xy(vec2(
+                    self.trig_values_scaled.cos * 0.5 + 15.0 * x,
+                    self.trig_values_scaled.sin * 0.5 + 15.0 * y,
+                ))
+                .layout(&font_layout(13, Regular, Center))
+                .color(LIGHTGREY);
+        }
     }
 }
 
