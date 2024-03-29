@@ -83,17 +83,14 @@ struct TrigValues {
 
 impl TrigValues {
     pub fn clamp_inf(&mut self) {
-        let set_inf = |value: &mut f32| {
-            if value.is_infinite() {
-                *value = if value.is_sign_positive() { INF } else { -INF };
-            }
+        let clamp_finite = |value: &mut f32| {
+            *value = value.clamp(-INF, INF);
         };
 
-        // these can be infinite, so this prevents some drawing errors
-        set_inf(&mut self.tan);
-        set_inf(&mut self.cot);
-        set_inf(&mut self.sec);
-        set_inf(&mut self.csc);
+        clamp_finite(&mut self.tan);
+        clamp_finite(&mut self.cot);
+        clamp_finite(&mut self.sec);
+        clamp_finite(&mut self.csc);
     }
 }
 
