@@ -85,6 +85,28 @@ impl std::ops::Mul<f32> for TrigValues {
 
 // --- *** --- //
 
+#[derive(Debug, Default, Clone, Copy)]
+enum Theme {
+    #[default]
+    Dark,
+    Light,
+}
+
+impl Theme {
+    #[allow(unreachable_patterns)]
+    pub fn toggle_light_dark(&mut self) {
+        match self {
+            Self::Dark => *self = Self::Light,
+            Self::Light => *self = Self::Dark,
+            _ => {}
+        }
+    }
+
+    pub const fn is_dark(self) -> bool {
+        matches!(self, Self::Dark)
+    }
+}
+
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug)]
 pub struct Model {
@@ -99,7 +121,9 @@ pub struct Model {
     draw_values: bool,
     draw_theta: bool,
 
-    label_fading: Labels,
+    theme: Theme,
+
+    label_fades: Labels,
 }
 
 impl Model {
@@ -124,7 +148,9 @@ impl Model {
             draw_values: true,
             draw_theta: true,
 
-            label_fading: Labels::new(),
+            theme: Theme::default(),
+
+            label_fades: Labels::new(),
         }
     }
 
@@ -134,52 +160,75 @@ impl Model {
         self.update_theta(delta_time);
         self.compute_trig_values();
         self.update_label_positions();
-        self.label_fading.update(delta_time);
+        self.label_fades.update(delta_time);
     }
 
     fn update_label_positions(&mut self) {
         // sin
-        self.label_fading.sin_pos = vec2(
-            self.trig_values_scaled.cos + 22.0,
-            self.trig_values_scaled.sin * 0.5,
+        self.label_fades.update_position(
+            Label::Sin,
+            vec2(
+                self.trig_values_scaled.cos + 22.0,
+                self.trig_values_scaled.sin * 0.5,
+            ),
         );
 
         // cos
-        self.label_fading.cos_pos = vec2(self.trig_values_scaled.cos * 0.5, 15.0);
+        self.label_fades.update_position(
+            Label::Cos,
+            vec2(self.trig_values_scaled.cos * 0.5, 15.0),
+        );
 
         // tan
-        self.label_fading.tan_pos =
-            vec2(UNIT_RADIUS + 23.0, self.trig_values_scaled.tan * 0.5);
+        self.label_fades.update_position(
+            Label::Tan,
+            vec2(UNIT_RADIUS + 23.0, self.trig_values_scaled.tan * 0.5),
+        );
 
         // cot
         let cot_x_dir = if self.theta >= PI { -1.0 } else { 1.0 };
-        self.label_fading.cot_pos = vec2(
-            self.trig_values_scaled.cos * 0.5
-                + (cot_x_dir * self.trig_values.cos * 20.0),
-            (self.trig_values_scaled.sin + self.trig_values_scaled.csc) * 0.5
-                + 12.0
-                + (self.trig_values.sin.abs() * 8.0),
+        self.label_fades.update_position(
+            Label::Cot,
+            vec2(
+                self.trig_values_scaled.cos * 0.5
+                    + (cot_x_dir * self.trig_values.cos * 20.0),
+                (self.trig_values_scaled.sin + self.trig_values_scaled.csc)
+                    * 0.5
+                    + 12.0
+                    + (self.trig_values.sin.abs() * 8.0),
+            ),
         );
 
         // sec
-        self.label_fading.sec_pos = vec2(
-            UNIT_RADIUS * 0.5 - (self.trig_values.tan * 7.0),
-            self.trig_values_scaled.tan * 0.5 + 18.0,
+        self.label_fades.update_position(
+            Label::Sec,
+            vec2(
+                UNIT_RADIUS * 0.5 - (self.trig_values.tan * 7.0),
+                self.trig_values_scaled.tan * 0.5 + 18.0,
+            ),
         );
 
         // csc
-        self.label_fading.csc_pos = vec2(-25.0, self.trig_values_scaled.csc * 0.5);
+        self.label_fades.update_position(
+            Label::Csc,
+            vec2(-25.0, self.trig_values_scaled.csc * 0.5),
+        );
 
         // theta
         let (th_y, th_x) = (self.theta * 0.5).sin_cos();
-        self.label_fading.theta_pos =
-            vec2(th_x * UNIT_RADIUS * 0.93, th_y * UNIT_RADIUS * 0.93);
+        self.label_fades.update_position(
+            Label::Theta,
+            vec2(th_x * UNIT_RADIUS * 0.93, th_y * UNIT_RADIUS * 0.93),
+        );
 
         // unit
         let (un_y, un_x) = (self.theta - PI * 0.5).sin_cos();
-        self.label_fading.unit_pos = vec2(
-            self.trig_values_scaled.cos * 0.5 + 15.0 * un_x,
-            self.trig_values_scaled.sin * 0.5 + 15.0 * un_y,
+        self.label_fades.update_position(
+            Label::Unit,
+            vec2(
+                self.trig_values_scaled.cos * 0.5 + 15.0 * un_x,
+                self.trig_values_scaled.sin * 0.5 + 15.0 * un_y,
+            ),
         );
     }
 
@@ -246,30 +295,47 @@ impl Model {
         self.rate = DEFAULT_RATE;
     }
 
+    pub fn toggle_theme(&mut self) {
+        self.theme.toggle_light_dark();
+    }
+
+    pub fn bg_color(&self) -> Rgb {
+        if self.theme.is_dark() {
+            Rgb::new(0.0, 0.0, 0.0)
+        }
+        else {
+            Rgb::new(0.9, 0.9, 0.9)
+        }
+    }
+
     // Draw methods
 
     pub fn draw_bg_lines(&self, draw: &Draw) {
+        let color = if self.theme.is_dark() { 0.6 } else { 0.4 };
+
         draw.line()
             .stroke_weight(STROKE_WEIGHT - 1.0)
             .start(vec2(-1000.0, 0.0))
             .end(vec2(1000.0, 0.0))
-            .color(GREY);
+            .color(Rgb::new(color, color, color));
 
         draw.line()
             .stroke_weight(STROKE_WEIGHT - 1.0)
             .start(vec2(0.0, 1000.0))
             .end(vec2(0.0, -1000.0))
-            .color(GREY);
+            .color(Rgb::new(color, color, color));
 
         self.draw_unit_line(draw);
     }
 
     pub fn draw_unit_circle(&self, draw: &Draw) {
+        let color = if self.theme.is_dark() { 0.6 } else { 0.4 };
+
         draw.ellipse()
             .no_fill()
             .radius(UNIT_RADIUS)
             .stroke_weight(STROKE_WEIGHT - 0.3)
-            .stroke(GREY)
+            .stroke(Rgb::new(color, color, color))
             .xy(Vec2::ZERO);
 
         if self.draw_theta {
@@ -283,7 +349,10 @@ impl Model {
             self.trig_values.sin * UNIT_RADIUS,
         );
 
-        draw.ellipse().radius(8.0).color(WHITE).xy(pt);
+        draw.ellipse()
+            .radius(8.0)
+            .color(if self.theme.is_dark() { WHITE } else { BLACK })
+            .xy(pt);
     }
 
     pub fn draw_trig_lines(&self, draw: &Draw) {
@@ -370,12 +439,18 @@ impl Model {
             ))
             .xy(vec2(430.0, 200.0))
             .layout(&font_layout(18, Italic, Left))
-            .color(WHITE);
+            .color(if self.theme.is_dark() {
+                WHITE
+            }
+            else {
+                BLACK
+            });
         }
 
-        let rate = if self.is_running { self.rate } else { 0.0 };
-
         // rate
+        let rate = if self.is_running { self.rate } else { 0.0 };
+        let rate_color = if self.theme.is_dark() { 0.6 } else { 0.4 };
+
         draw.text(&format!(
             // TODO come on...
             "rate = {:.2} rad/s\n           ({:.0} deg/s)",
@@ -384,7 +459,7 @@ impl Model {
         ))
         .xy(vec2(430.0, -200.0))
         .layout(&font_layout(18, Italic, Left))
-        .color(GREY);
+        .color(Rgb::new(rate_color, rate_color, rate_color));
     }
 
     // Private draw methods
@@ -394,13 +469,17 @@ impl Model {
 
         let progress = self.theta / TAU;
         let num_points = (THETA_POINTS as f32 * progress).ceil() as usize;
+        let theta_color = if self.theme.is_dark() { 1.0 } else { 0.0 };
 
         if self.draw_labels {
             draw.text("θ")
-                .xy(self.label_fading.theta_pos)
+                .xy(self.label_fades.get_position(Label::Theta))
                 .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
                 .color(Rgba::new(
-                    1.0, 1.0, 1.0, self.label_fading.theta_label_opacity,
+                    theta_color,
+                    theta_color,
+                    theta_color,
+                    self.label_fades.get_opacity(Label::Theta),
                 ));
         }
 
@@ -416,27 +495,12 @@ impl Model {
                 let t = i as f32 / num_points as f32;
                 let (y, x) = (self.theta * t).sin_cos();
 
-                (vec2(x * UNIT_RADIUS, y * UNIT_RADIUS), WHITE)
+                (
+                    vec2(x * UNIT_RADIUS, y * UNIT_RADIUS),
+                    Rgb::new(theta_color, theta_color, theta_color),
+                )
             }))
             .finish();
-    }
-
-    fn draw_cos_line(&self, draw: &Draw) {
-        draw.line()
-            .start(Vec2::ZERO)
-            .end(vec2(self.trig_values_scaled.cos, 0.0))
-            .color(COS_COLOR)
-            .stroke_weight(STROKE_WEIGHT);
-
-        if self.draw_labels {
-            draw.text(COS_LABEL)
-                .xy(self.label_fading.cos_pos)
-                .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
-                .color(Rgba::new(
-                    COS_COLOR.red, COS_COLOR.green, COS_COLOR.blue,
-                    self.label_fading.cos_label_opacity,
-                ));
-        }
     }
 
     fn draw_sin_line(&self, draw: &Draw) {
@@ -448,11 +512,33 @@ impl Model {
 
         if self.draw_labels {
             draw.text(SIN_LABEL)
-                .xy(self.label_fading.sin_pos)
+                .xy(self.label_fades.get_position(Label::Sin))
                 .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
                 .color(Rgba::new(
-                    SIN_COLOR.red, SIN_COLOR.green, SIN_COLOR.blue,
-                    self.label_fading.sin_label_opacity,
+                    SIN_COLOR.red,
+                    SIN_COLOR.green,
+                    SIN_COLOR.blue,
+                    self.label_fades.get_opacity(Label::Sin),
+                ));
+        }
+    }
+
+    fn draw_cos_line(&self, draw: &Draw) {
+        draw.line()
+            .start(Vec2::ZERO)
+            .end(vec2(self.trig_values_scaled.cos, 0.0))
+            .color(COS_COLOR)
+            .stroke_weight(STROKE_WEIGHT);
+
+        if self.draw_labels {
+            draw.text(COS_LABEL)
+                .xy(self.label_fades.get_position(Label::Cos))
+                .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
+                .color(Rgba::new(
+                    COS_COLOR.red,
+                    COS_COLOR.green,
+                    COS_COLOR.blue,
+                    self.label_fades.get_opacity(Label::Cos),
                 ));
         }
     }
@@ -466,7 +552,7 @@ impl Model {
 
         if self.draw_labels {
             draw.text(TAN_LABEL)
-                .xy(self.label_fading.tan_pos)
+                .xy(self.label_fades.get_position(Label::Tan))
                 .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
                 .color(TAN_COLOR);
         }
@@ -483,7 +569,7 @@ impl Model {
 
         if self.draw_labels {
             draw.text(COT_LABEL)
-                .xy(self.label_fading.cot_pos)
+                .xy(self.label_fades.get_position(Label::Cot))
                 .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
                 .color(COT_COLOR);
         }
@@ -498,9 +584,14 @@ impl Model {
 
         if self.draw_labels {
             draw.text(SEC_LABEL)
-                .xy(self.label_fading.sec_pos)
+                .xy(self.label_fades.get_position(Label::Sec))
                 .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
-                .color(SEC_COLOR);
+                .color(Rgba::new(
+                    SEC_COLOR.red,
+                    SEC_COLOR.green,
+                    SEC_COLOR.blue,
+                    self.label_fades.get_opacity(Label::Sec),
+                ));
         }
     }
 
@@ -513,7 +604,7 @@ impl Model {
 
         if self.draw_labels {
             draw.text(CSC_LABEL)
-                .xy(self.label_fading.csc_pos)
+                .xy(self.label_fades.get_position(Label::Csc))
                 .layout(&font_layout(LABEL_FONT_SIZE, Regular, Center))
                 .color(CSC_COLOR);
         }
@@ -527,11 +618,16 @@ impl Model {
             .stroke_weight(STROKE_WEIGHT - 0.8);
 
         if self.draw_labels {
+            let unit_color = if self.theme.is_dark() { 0.8 } else { 0.2 };
+
             draw.text("1.0")
-                .xy(self.label_fading.unit_pos)
+                .xy(self.label_fades.get_position(Label::Unit))
                 .layout(&font_layout(13, Regular, Center))
                 .color(Rgba::new(
-                    0.8, 0.8, 0.8, self.label_fading.unit_label_opacity,
+                    unit_color,
+                    unit_color,
+                    unit_color,
+                    self.label_fades.get_opacity(Label::Unit),
                 ));
         }
     }
@@ -543,6 +639,7 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
         Key::L => model.toggle_labels(),
         Key::V => model.toggle_values(),
         Key::T => model.toggle_theta(),
+        // Key::H => model.toggle_theme(),
         Key::Up => model.increment_rate(),
         Key::Down => model.decrement_rate(),
         Key::R => model.reset_theta(),
@@ -554,7 +651,7 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
 #[allow(clippy::needless_pass_by_value)]
 fn view(app: &App, model: &Model, frame: Frame) {
     let draw = &app.draw().translate(vec3(-120.0, 0.0, 0.0));
-    draw.background().color(BLACK);
+    draw.background().color(model.bg_color());
 
     model.draw_bg_lines(draw);
     model.draw_unit_circle(draw);
